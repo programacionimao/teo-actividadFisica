@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de Actividad Física</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f3f4f6; /* bg-gray-100 */
+        }
+        /* Custom styles for date input to match other inputs */
+        input[type="date"] {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            background-color: #fff;
+            border: 1px solid #d1d5db; /* border-gray-300 */
+            border-radius: 0.5rem; /* rounded-lg */
+            padding: 0.5rem 0.75rem; /* py-2 px-3 */
+            color: #374151; /* text-gray-700 */
+            line-height: 1.25; /* leading-tight */
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); /* shadow */
+            width: 100%;
+            display: block;
+        }
+        input[type="date"]:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.5); /* focus:shadow-outline with indigo color */
+            border-color: #6366f1; /* focus:border-indigo-500 */
+        }
+        /* Style for date picker icon on some browsers */
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            filter: invert(40%) sepia(80%) saturate(2000%) hue-rotate(230deg) brightness(90%) contrast(80%); /* Makes icon indigo */
+            cursor: pointer;
+        }
+        /* Calendar specific styles */
+        .calendar-day {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 2.5rem; /* Equivalent to h-10 */
+            width: 2.5rem; /* Equivalent to w-10 */
+            border-radius: 9999px; /* rounded-full */
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+        }
+        .calendar-day:hover:not(.bg-indigo-500) {
+            background-color: #e0e7ff; /* indigo-100 */
+        }
+        .calendar-day.active-day {
+            background-color: #6366f1; /* indigo-500 */
+            color: white;
+            font-weight: bold;
+        }
+        .calendar-day.current-day {
+            border: 2px solid #6366f1; /* indigo-500 */
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gray-100 p-4 sm:p-6 lg:p-8">
+    <div class="max-w-6xl mx-auto bg-white rounded-xl shadow-lg p-6 sm:p-8">
+        <h1 class="text-3xl sm:text-4xl font-bold text-center text-gray-800 mb-6">
+            Dashboard de Actividad Física
+        </h1>
+
+        <div id="messageDisplay" class="hidden bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 mb-4 rounded-md" role="alert">
+            <p id="messageText"></p>
+        </div>
+
+        <!-- Dashboard Summary -->
+        <div class="bg-indigo-600 text-white rounded-lg p-4 mb-6 shadow-md">
+            <h2 class="text-xl font-semibold mb-2">Resumen de Actividad</h2>
+            <p class="text-lg">Días con actividad física registrada: <span class="font-bold" id="activeDaysCount">0</span></p>
+        </div>
+
+        <!-- Main content: Form and Calendar -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+            <!-- Activity Input Form -->
+            <form id="activityForm" class="col-span-1">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">Registrar Actividad</h2>
+                <div class="grid grid-cols-1 gap-4">
+                    <div>
+                        <label for="fecha" class="block text-gray-700 text-sm font-bold mb-2">Fecha:</label>
+                        <input
+                            type="date"
+                            id="fecha"
+                            class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                            required
+                        />
+                    </div>
+                    <div>
+                        <label for="tiempo" class="block text-gray-700 text-sm font-bold mb-2">Tiempo (minutos):</label>
+                        <input
+                            type="number"
+                            id="tiempo"
+                            placeholder="Ej: 30"
+                            class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                            required
+                        />
+                    </div>
+                    <div>
+                        <label for="distancia" class="block text-gray-700 text-sm font-bold mb-2">Distancia:</label>
+                        <input
+                            type="number"
+                            step="0.1"
+                            id="distancia"
+                            placeholder="Ej: 5.2"
+                            class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                            required
+                        />
+                    </div>
+                    <div>
+                        <label for="calorias" class="block text-gray-700 text-sm font-bold mb-2">Calorías:</label>
+                        <input
+                            type="number"
+                            id="calorias"
+                            placeholder="Ej: 300"
+                            class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                            required
+                        />
+                    </div>
+                    <div class="flex items-center">
+                        <input
+                            type="checkbox"
+                            id="eliptica"
+                            class="mr-2 h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                        />
+                        <label for="eliptica" class="text-gray-700 text-sm font-bold">Elíptica</label>
+                    </div>
+                    <div class="flex items-center">
+                        <input
+                            type="checkbox"
+                            id="sentado"
+                            class="mr-2 h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                        />
+                        <label for="sentado" class="text-gray-700 text-sm font-bold">Sentado</label>
+                    </div>
+                    <div class="col-span-full flex flex-col sm:flex-row gap-2">
+                        <button
+                            type="submit"
+                            id="submitButton"
+                            class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg focus:outline-none focus:shadow-outline transition duration-300 ease-in-out transform hover:scale-105"
+                        >
+                            Guardar Actividad
+                        </button>
+                        <button
+                            type="button"
+                            id="cancelEditBtn"
+                            class="flex-1 bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-lg focus:outline-none focus:shadow-outline transition duration-300 ease-in-out transform hover:scale-105 hidden"
+                        >
+                            Cancelar Edición
+                        </button>
+                    </div>
+                </div>
+            </form>
+
+            <!-- Calendar Display -->
+            <div id="calendarContainer" class="col-span-1 bg-white p-6 rounded-lg shadow-md">
+                <div class="flex justify-between items-center mb-4">
+                    <button id="prevMonthBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-full transition duration-300">&lt;</button>
+                    <h3 id="currentMonthYear" class="text-xl font-semibold text-gray-800"></h3>
+                    <button id="nextMonthBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-full transition duration-300">&gt;</button>
+                </div>
+                <div class="grid grid-cols-7 text-center font-bold text-gray-600 mb-2">
+                    <span>Dom</span>
+                    <span>Lun</span>
+                    <span>Mar</span>
+                    <span>Mié</span>
+                    <span>Jue</span>
+                    <span>Vie</span>
+                    <span>Sáb</span>
+                </div>
+                <div id="calendarDays" class="grid grid-cols-7 gap-1">
+                    <!-- Calendar days will be inserted here by JavaScript -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Activity List -->
+        <h2 class="text-2xl font-bold text-gray-800 mb-4 text-center">Actividades Registradas</h2>
+        <p id="noActivitiesMessage" class="text-center text-gray-600 hidden">No hay actividades registradas aún.</p>
+        <div id="activitiesTableContainer" class="overflow-x-auto rounded-lg shadow-md">
+            <table class="min-w-full bg-white rounded-lg">
+                <thead class="bg-gray-200">
+                    <tr>
+                        <th class="py-3 px-4 text-left text-xs font-medium text-gray-600 uppercase tracking-wider rounded-tl-lg">Consecutivo</th>
+                        <th class="py-3 px-4 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Fecha</th>
+                        <th class="py-3 px-4 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Tiempo (min)</th>
+                        <th class="py-3 px-4 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Distancia</th>
+                        <th class="py-3 px-4 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Calorías</th>
+                        <th class="py-3 px-4 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Elíptica</th>
+                        <th class="py-3 px-4 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Sentado</th>
+                        <th class="py-3 px-4 text-left text-xs font-medium text-gray-600 uppercase tracking-wider rounded-tr-lg">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="activitiesTableBody" class="divide-y divide-gray-200">
+                    <!-- Activities will be inserted here by JavaScript -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script type="module">
+        // Global variable to store activities data
+        let activitiesData = [];
+        let activeDates = new Set(); // To store unique dates with activities (YYYY-MM-DD)
+        let editingActivityId = null; // Stores the ID of the activity being edited
+
+        // Calendar state
+        let currentMonth = new Date().getMonth();
+        let currentYear = new Date().getFullYear();
+        const today = new Date();
+
+        // DOM Elements references
+        const messageDisplay = document.getElementById('messageDisplay');
+        const messageText = document.getElementById('messageText');
+        const activeDaysCountElement = document.getElementById('activeDaysCount');
+        const activityForm = document.getElementById('activityForm');
+        const fechaInput = document.getElementById('fecha');
+        const tiempoInput = document.getElementById('tiempo');
+        const distanciaInput = document.getElementById('distancia');
+        const caloriasInput = document.getElementById('calorias');
+        const elipticaInput = document.getElementById('eliptica');
+        const sentadoInput = document.getElementById('sentado');
+        const activitiesTableBody = document.getElementById('activitiesTableBody');
+        const noActivitiesMessage = document.getElementById('noActivitiesMessage');
+        const activitiesTableContainer = document.getElementById('activitiesTableContainer');
+        const submitButton = document.getElementById('submitButton');
+        const cancelEditBtn = document.getElementById('cancelEditBtn');
+
+
+        // Calendar DOM elements
+        const currentMonthYearElement = document.getElementById('currentMonthYear');
+        const prevMonthBtn = document.getElementById('prevMonthBtn');
+        const nextMonthBtn = document.getElementById('nextMonthBtn');
+        const calendarDaysContainer = document.getElementById('calendarDays');
+
+        // Set today's date as default for the date input
+        fechaInput.value = new Date().toISOString().split('T')[0];
+
+        /**
+         * Displays a message to the user in a styled alert box.
+         * @param {string} message - The message to display.
+         * @param {string} type - The type of message ('blue', 'green', 'red', 'orange').
+         */
+        function displayMessage(message, type = 'blue') {
+            messageText.textContent = message;
+            messageDisplay.className = `bg-${type}-100 border-l-4 border-${type}-500 text-${type}-700 p-4 mb-4 rounded-md`;
+            messageDisplay.classList.remove('hidden');
+            setTimeout(() => {
+                messageDisplay.classList.add('hidden');
+            }, 5000); // Hide after 5 seconds
+        }
+
+        /**
+         * Loads activities data from local storage.
+         */
+        function loadActivities() {
+            try {
+                console.log("Attempting to load activities from local storage...");
+                const storedActivities = localStorage.getItem('physicalActivities');
+                if (storedActivities) {
+                    console.log("Found stored activities in local storage. Parsing...");
+                    const parsedData = JSON.parse(storedActivities);
+                    // Check if the parsed data is an array
+                    if (Array.isArray(parsedData)) {
+                        activitiesData = parsedData;
+                        console.log("Successfully parsed activities data. Number of activities:", activitiesData.length);
+                    } else {
+                        console.warn("Stored data is not an array. Clearing local storage for 'physicalActivities'. Stored data:", storedActivities);
+                        localStorage.removeItem('physicalActivities'); // Clear corrupted data
+                        activitiesData = [];
+                        displayMessage("Los datos de actividad guardados no son válidos y se han reiniciado. Por favor, ingrese nuevas actividades.", 'orange');
+                    }
+                } else {
+                    activitiesData = [];
+                    console.log("No activities found in local storage. Starting with empty data.");
+                }
+                // Sort activities by creation timestamp to ensure consistent consecutive numbers
+                activitiesData.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+                renderActivities();
+                updateActiveDaysCount();
+                renderCalendar(currentYear, currentMonth); // Render calendar after loading data
+            } catch (e) {
+                console.error("Critical error loading activities from local storage:", e);
+                displayMessage("Error crítico al cargar actividades del almacenamiento local. Los datos podrían estar corruptos y se han reiniciado. Consulte la consola para más detalles.", 'red');
+                localStorage.removeItem('physicalActivities'); // Ensure corrupted data is removed
+                activitiesData = []; // Reset to empty if there's an error during parse
+                renderActivities(); // Render empty state
+                updateActiveDaysCount(); // Update count to 0
+                renderCalendar(currentYear, currentMonth); // Render calendar with no active days
+            }
+        }
+
+        /**
+         * Saves activities data to local storage.
+         */
+        function saveActivities() {
+            try {
+                localStorage.setItem('physicalActivities', JSON.stringify(activitiesData));
+                console.log("Saving activities to local storage. Current data:", activitiesData);
+            } catch (e) {
+                console.error("Error saving activities to local storage:", e);
+                displayMessage("Error al guardar actividades en el almacenamiento local.", 'red');
+            }
+        }
+
+        /**
+         * Fetches the next consecutive number for a new activity.
+         * This function now operates on the `activitiesData` array.
+         * @returns {number} The next consecutive number.
+         */
+        function getNextConsecutivo() {
+            if (activitiesData.length === 0) {
+                return 1;
+            }
+            // Find the maximum consecutive number and add 1
+            const maxConsecutivo = Math.max(...activitiesData.map(activity => activity.consecutivo || 0));
+            return maxConsecutivo + 1;
+        }
+
+        /**
+         * Renders the activities data into the HTML table.
+         */
+        function renderActivities() {
+            activitiesTableBody.innerHTML = ''; // Clear existing rows
+            if (activitiesData.length === 0) {
+                noActivitiesMessage.classList.remove('hidden');
+                activitiesTableContainer.classList.add('hidden');
+                return;
+            } else {
+                noActivitiesMessage.classList.add('hidden');
+                activitiesTableContainer.classList.remove('hidden');
+            }
+
+            activitiesData.forEach(activity => {
+                const row = activitiesTableBody.insertRow();
+                row.className = "hover:bg-gray-50";
+
+                const tiempoColorClass = getTiempoColorClass(activity.tiempo);
+
+                // Parse the date string to a Date object, ensuring local interpretation
+                const [year, month, day] = activity.fecha.split('-').map(Number);
+                const displayDate = new Date(year, month - 1, day); // Month is 0-indexed
+
+                row.innerHTML = `
+                    <td class="py-3 px-4 whitespace-nowrap text-sm text-gray-800">${activity.consecutivo}</td>
+                    <td class="py-3 px-4 whitespace-nowrap text-sm text-gray-800">${displayDate.toLocaleDateString('es-ES')}</td>
+                    <td class="py-3 px-4 whitespace-nowrap text-sm font-semibold ${tiempoColorClass} rounded-md">${activity.tiempo}</td>
+                    <td class="py-3 px-4 whitespace-nowrap text-sm text-gray-800">${activity.distancia}</td>
+                    <td class="py-3 px-4 whitespace-nowrap text-sm text-gray-800">${activity.calorias}</td>
+                    <td class="py-3 px-4 whitespace-nowrap text-sm text-gray-800">${activity.eliptica}</td>
+                    <td class="py-3 px-4 whitespace-nowrap text-sm text-gray-800">${activity.sentado}</td>
+                    <td class="py-3 px-4 whitespace-nowrap text-sm text-gray-800">
+                        <button data-id="${activity.id}" class="edit-btn bg-blue-500 hover:bg-blue-600 text-white py-1 px-2 rounded-md mr-2">Editar</button>
+                        <button data-id="${activity.id}" class="delete-btn bg-red-500 hover:bg-red-600 text-white py-1 px-2 rounded-md">Eliminar</button>
+                    </td>
+                `;
+            });
+
+            // Attach event listeners to new buttons
+            document.querySelectorAll('.edit-btn').forEach(button => {
+                button.addEventListener('click', (e) => editActivity(parseInt(e.target.dataset.id)));
+            });
+            document.querySelectorAll('.delete-btn').forEach(button => {
+                button.addEventListener('click', (e) => deleteActivity(parseInt(e.target.dataset.id)));
+            });
+        }
+
+        /**
+         * Returns the Tailwind CSS class for time-based coloring.
+         * @param {number} time - The time in minutes.
+         * @returns {string} The CSS class string.
+         */
+        function getTiempoColorClass(time) {
+            if (time >= 45) return 'bg-green-500 text-white';
+            if (time >= 30) return 'bg-yellow-500 text-white';
+            if (time >= 15) return 'bg-blue-500 text-white';
+            return '';
+        }
+
+        /**
+         * Updates the count of unique active days and the activeDates Set.
+         */
+        function updateActiveDaysCount() {
+            activeDates.clear(); // Clear previous dates
+            activitiesData.forEach(activity => {
+                // Ensure the date is correctly parsed and added as YYYY-MM-DD
+                const date = new Date(activity.fecha);
+                activeDates.add(date.toISOString().split('T')[0]);
+            });
+            activeDaysCountElement.textContent = activeDates.size;
+        }
+
+        /**
+         * Renders the calendar for the given year and month.
+         * @param {number} year - The year to display.
+         * @param {number} month - The month to display (0-indexed).
+         */
+        function renderCalendar(year, month) {
+            calendarDaysContainer.innerHTML = ''; // Clear previous days
+
+            const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+                                "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+            currentMonthYearElement.textContent = `${monthNames[month]} ${year}`;
+
+            const firstDayOfMonth = new Date(year, month, 1).getDay(); // 0 for Sunday, 1 for Monday, etc.
+            const daysInMonth = new Date(year, month + 1, 0).getDate(); // Last day of the month
+
+            // Fill leading empty days
+            for (let i = 0; i < firstDayOfMonth; i++) {
+                const emptyDiv = document.createElement('div');
+                calendarDaysContainer.appendChild(emptyDiv);
+            }
+
+            // Fill days of the month
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dayDiv = document.createElement('div');
+                dayDiv.classList.add('calendar-day', 'text-gray-800');
+                dayDiv.textContent = day;
+
+                const fullDate = new Date(year, month, day);
+                const formattedDate = fullDate.toISOString().split('T')[0];
+
+                // Check if this day has activity
+                if (activeDates.has(formattedDate)) {
+                    dayDiv.classList.add('active-day');
+                }
+
+                // Highlight today's date
+                if (fullDate.getDate() === today.getDate() &&
+                    fullDate.getMonth() === today.getMonth() &&
+                    fullDate.getFullYear() === today.getFullYear()) {
+                    dayDiv.classList.add('current-day');
+                }
+
+                calendarDaysContainer.appendChild(dayDiv);
+            }
+        }
+
+        /**
+         * Populates the form with the data of the activity to be edited.
+         * @param {number} id - The ID of the activity to edit.
+         */
+        function editActivity(id) {
+            const activityToEdit = activitiesData.find(activity => activity.id === id);
+            if (activityToEdit) {
+                fechaInput.value = activityToEdit.fecha;
+                tiempoInput.value = activityToEdit.tiempo;
+                distanciaInput.value = activityToEdit.distancia;
+                caloriasInput.value = activityToEdit.calorias;
+                elipticaInput.checked = (activityToEdit.eliptica === 'Sí');
+                sentadoInput.checked = (activityToEdit.sentado === 'Sí');
+
+                editingActivityId = id; // Set the ID of the activity being edited
+                submitButton.textContent = 'Actualizar Actividad';
+                cancelEditBtn.classList.remove('hidden');
+                displayMessage("Editando actividad. Modifica los campos y haz clic en 'Actualizar Actividad'.", 'blue');
+            } else {
+                displayMessage("Actividad no encontrada para editar.", 'red');
+            }
+        }
+
+        /**
+         * Deletes an activity from the list.
+         * @param {number} id - The ID of the activity to delete.
+         */
+        function deleteActivity(id) {
+            // For simplicity, direct deletion. A custom confirmation modal would be better UX.
+            activitiesData = activitiesData.filter(activity => activity.id !== id);
+            recalculateConsecutiveNumbers(); // Re-index after deletion
+            saveActivities();
+            updateActiveDaysCount();
+            renderActivities();
+            renderCalendar(currentYear, currentMonth);
+            displayMessage("Actividad eliminada con éxito.", 'green');
+            cancelEdit(); // Ensure form is reset if deleted item was being edited
+        }
+
+        /**
+         * Recalculates consecutive numbers for all activities after an addition or deletion.
+         * Assumes activitiesData is already sorted by createdAt.
+         */
+        function recalculateConsecutiveNumbers() {
+            activitiesData.forEach((activity, index) => {
+                activity.consecutivo = index + 1;
+            });
+        }
+
+        /**
+         * Resets the form and editing state.
+         */
+        function cancelEdit() {
+            editingActivityId = null;
+            submitButton.textContent = 'Guardar Actividad';
+            cancelEditBtn.classList.add('hidden');
+            fechaInput.value = new Date().toISOString().split('T')[0]; // Reset date to today
+            tiempoInput.value = '';
+            distanciaInput.value = '';
+            caloriasInput.value = '';
+            elipticaInput.checked = false;
+            sentadoInput.checked = false;
+            displayMessage("Edición cancelada. Puedes añadir una nueva actividad.", 'blue');
+        }
+
+        // Event Listeners for Calendar Navigation
+        prevMonthBtn.addEventListener('click', () => {
+            currentMonth--;
+            if (currentMonth < 0) {
+                currentMonth = 11;
+                currentYear--;
+            }
+            renderCalendar(currentYear, currentMonth);
+        });
+
+        nextMonthBtn.addEventListener('click', () => {
+            currentMonth++;
+            if (currentMonth > 11) {
+                currentMonth = 0;
+                currentYear++;
+            }
+            renderCalendar(currentYear, currentMonth);
+        });
+
+        // Event Listener for Form Submission
+        activityForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            // Get form values
+            const fecha = fechaInput.value;
+            const tiempo = parseInt(tiempoInput.value);
+            const distancia = parseFloat(distanciaInput.value);
+            const calorias = parseInt(caloriasInput.value);
+            // Modified: Store 'Sí' or '' based on checkbox state
+            const eliptica = elipticaInput.checked ? 'Sí' : '';
+            const sentado = sentadoInput.checked ? 'Sí' : '';
+
+            // Validate inputs
+            if (!fecha || isNaN(tiempo) || isNaN(distancia) || isNaN(calorias) || tiempo <= 0 || distancia <= 0 || calorias <= 0) {
+                displayMessage("Por favor, complete todos los campos obligatorios con valores numéricos válidos y positivos.", 'orange');
+                return;
+            }
+
+            try {
+                if (editingActivityId !== null) {
+                    // Update existing activity
+                    const index = activitiesData.findIndex(activity => activity.id === editingActivityId);
+                    if (index !== -1) {
+                        activitiesData[index] = {
+                            ...activitiesData[index], // Keep existing properties like createdAt
+                            fecha: fecha,
+                            tiempo: tiempo,
+                            distancia: distancia,
+                            calorias: calorias,
+                            eliptica: eliptica,
+                            sentado: sentado
+                        };
+                        displayMessage("Actividad actualizada con éxito!", 'green');
+                    } else {
+                        displayMessage("Error: Actividad a actualizar no encontrada.", 'red');
+                    }
+                } else {
+                    // Add new activity
+                    const nextConsecutivo = getNextConsecutivo();
+                    const newActivity = {
+                        id: Date.now(), // Simple unique ID for local storage
+                        consecutivo: nextConsecutivo,
+                        fecha: fecha, // Store as YYYY-MM-DD string
+                        tiempo: tiempo,
+                        distancia: distancia,
+                        calorias: calorias,
+                        eliptica: eliptica,
+                        sentado: sentado,
+                        createdAt: new Date().toISOString() // Timestamp for sorting
+                    };
+                    activitiesData.push(newActivity);
+                    displayMessage("Actividad guardada con éxito!", 'green');
+                }
+
+                // Prompt for install if available (PWA)
+                if (window.deferredPrompt) {
+                    window.deferredPrompt.prompt();
+                    window.deferredPrompt.userChoice.then(() => {
+                        window.deferredPrompt = null;
+                    });
+                }
+
+                activitiesData.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt)); // Re-sort after adding/updating
+                recalculateConsecutiveNumbers(); // Ensure consecutive numbers are correct
+                saveActivities();
+                renderActivities();
+                updateActiveDaysCount();
+                renderCalendar(currentYear, currentMonth); // Re-render calendar to show new active day
+                
+                cancelEdit(); // Reset form and editing state
+            } catch (e) {
+                console.error("Error saving/updating activity: ", e);
+                displayMessage("Error al guardar/actualizar la actividad: " + e.message, 'red');
+            }
+        });
+
+        // Event Listener for Cancel Edit Button
+        cancelEditBtn.addEventListener('click', cancelEdit);
+
+        // Load activities and render calendar when the window loads
+        window.onload = loadActivities;
+    </script>
+</body>
+</html>
